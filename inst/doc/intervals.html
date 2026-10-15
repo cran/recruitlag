@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+
+
+<title>Reading the intervals: confidence, credible, and the four ways to cut one</title>
+
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+
+<style type="text/css">
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+</style>
+
+
+
+<style type="text/css">
+code {
+white-space: pre;
+}
+.sourceCode {
+overflow: visible;
+}
+</style>
+<style type="text/css" data-origin="pandoc">
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #aaaaaa;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa; padding-left: 4px; }
+div.sourceCode
+{ }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } 
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.at { color: #7d9029; } 
+code span.bn { color: #40a070; } 
+code span.bu { color: #008000; } 
+code span.cf { color: #007020; font-weight: bold; } 
+code span.ch { color: #4070a0; } 
+code span.cn { color: #880000; } 
+code span.co { color: #60a0b0; font-style: italic; } 
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.do { color: #ba2121; font-style: italic; } 
+code span.dt { color: #902000; } 
+code span.dv { color: #40a070; } 
+code span.er { color: #ff0000; font-weight: bold; } 
+code span.ex { } 
+code span.fl { color: #40a070; } 
+code span.fu { color: #06287e; } 
+code span.im { color: #008000; font-weight: bold; } 
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.kw { color: #007020; font-weight: bold; } 
+code span.op { color: #666666; } 
+code span.ot { color: #007020; } 
+code span.pp { color: #bc7a00; } 
+code span.sc { color: #4070a0; } 
+code span.ss { color: #bb6688; } 
+code span.st { color: #4070a0; } 
+code span.va { color: #19177c; } 
+code span.vs { color: #4070a0; } 
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } 
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    var j = 0;
+    while (j < rules.length) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") {
+        j++;
+        continue;
+      }
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') {
+        j++;
+        continue;
+      }
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">Reading the intervals: confidence,
+credible, and the four ways to cut one</h1>
+
+
+
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="fu">library</span>(recruitlag)</span></code></pre></div>
+<p>The package reports the exceedance, observed concentration over the
+ceiling, with an interval around it, and it offers three ways of making
+that interval. They give numbers that are usually close and sentences
+that are not interchangeable. This vignette says, as plainly as it can,
+what each interval is, what it is not, where each is strong and weak,
+and how to write the sentence that goes with it. It assumes no
+statistics beyond knowing what a percentile is.</p>
+<div id="the-one-distinction-that-matters" class="section level2">
+<h2>The one distinction that matters</h2>
+<p>Every interval here answers one of two questions, and they are
+different questions.</p>
+<p><strong>A confidence interval</strong> answers: <em>if the same study
+were repeated many times, drawing a new set of units each time, and the
+interval were computed each time by this recipe, how often would the
+interval contain the true value?</em> The answer is the level, 90% here.
+The interval you have is one of those repetitions. It either contains
+the true value or it does not, and the 90% is a property of the recipe,
+not of this interval. That is the whole of it, and it is why the
+sentence “there is a 90% probability that the exceedance lies between
+2.1 and 3.2” is not licensed by a confidence interval, however natural
+it sounds.</p>
+<p><strong>A credible interval</strong> answers: <em>given the data and
+a stated prior, what is the probability that the true value lies in this
+range?</em> The answer is again the level, and now it is a probability
+about the value itself. The sentence above is licensed. The price is the
+prior: a credible interval is only as meaningful as the prior it was
+computed under, and the prior has to be named.</p>
+<p>The package labels every interval it returns, in the printed summary
+and in the <code>interval</code> and <code>method</code> columns of
+<code>ceiling_draws_table()</code>, so that the reader never has to
+guess which question was answered.</p>
+</div>
+<div id="the-three-routes" class="section level2">
+<h2>The three routes</h2>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">20260913</span>)</span>
+<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a>k <span class="ot">&lt;-</span> <span class="fu">lag_kernels</span>(<span class="dv">4</span>, <span class="at">bin =</span> <span class="dv">6</span>, <span class="at">unit =</span> <span class="st">&quot;mo&quot;</span>)</span>
+<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a>b  <span class="ot">&lt;-</span> <span class="fu">lag_ceiling_boot</span>(lepanthes_hosts, <span class="at">unit =</span> <span class="st">&quot;host&quot;</span>, <span class="at">reproduction =</span> <span class="st">&quot;inflorescences&quot;</span>,</span>
+<span id="cb2-4"><a href="#cb2-4" tabindex="-1"></a>                       <span class="at">K =</span> <span class="dv">4</span>, <span class="at">kernels =</span> k, <span class="at">R =</span> <span class="dv">2000</span>)</span>
+<span id="cb2-5"><a href="#cb2-5" tabindex="-1"></a>bb <span class="ot">&lt;-</span> <span class="fu">lag_ceiling_bayesboot</span>(lepanthes_hosts, <span class="at">unit =</span> <span class="st">&quot;host&quot;</span>, <span class="at">reproduction =</span> <span class="st">&quot;inflorescences&quot;</span>,</span>
+<span id="cb2-6"><a href="#cb2-6" tabindex="-1"></a>                            <span class="at">K =</span> <span class="dv">4</span>, <span class="at">kernels =</span> k, <span class="at">draws =</span> <span class="dv">4000</span>)</span>
+<span id="cb2-7"><a href="#cb2-7" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(<span class="fu">ceiling_draws_table</span>(<span class="st">`</span><span class="at">cluster bootstrap</span><span class="st">`</span> <span class="ot">=</span> b, <span class="st">`</span><span class="at">Bayesian bootstrap</span><span class="st">`</span> <span class="ot">=</span> bb)[</span>
+<span id="cb2-8"><a href="#cb2-8" tabindex="-1"></a>  , <span class="fu">c</span>(<span class="st">&quot;record&quot;</span>, <span class="st">&quot;quantity&quot;</span>, <span class="st">&quot;estimate&quot;</span>, <span class="st">&quot;lower&quot;</span>, <span class="st">&quot;upper&quot;</span>, <span class="st">&quot;interval&quot;</span>, <span class="st">&quot;probability&quot;</span>, <span class="st">&quot;probability_is&quot;</span>)],</span>
+<span id="cb2-9"><a href="#cb2-9" tabindex="-1"></a>  <span class="at">digits =</span> <span class="dv">2</span>)</span></code></pre></div>
+<table>
+<colgroup>
+<col width="15%" />
+<col width="13%" />
+<col width="7%" />
+<col width="4%" />
+<col width="4%" />
+<col width="10%" />
+<col width="9%" />
+<col width="34%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="left">record</th>
+<th align="left">quantity</th>
+<th align="right">estimate</th>
+<th align="right">lower</th>
+<th align="right">upper</th>
+<th align="left">interval</th>
+<th align="right">probability</th>
+<th align="left">probability_is</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">cluster bootstrap</td>
+<td align="left">exceedance Gini</td>
+<td align="right">2.56</td>
+<td align="right">2.11</td>
+<td align="right">3.18</td>
+<td align="left">BCa</td>
+<td align="right">0</td>
+<td align="left">one-sided bootstrap p for exceedance &lt;= 1</td>
+</tr>
+<tr class="even">
+<td align="left">cluster bootstrap</td>
+<td align="left">exceedance CV</td>
+<td align="right">2.51</td>
+<td align="right">1.94</td>
+<td align="right">3.27</td>
+<td align="left">BCa</td>
+<td align="right">0</td>
+<td align="left">one-sided bootstrap p for exceedance &lt;= 1</td>
+</tr>
+<tr class="odd">
+<td align="left">Bayesian bootstrap</td>
+<td align="left">exceedance Gini</td>
+<td align="right">2.56</td>
+<td align="right">2.06</td>
+<td align="right">3.07</td>
+<td align="left">equal-tailed</td>
+<td align="right">1</td>
+<td align="left">P(exceedance &gt; 1)</td>
+</tr>
+<tr class="even">
+<td align="left">Bayesian bootstrap</td>
+<td align="left">exceedance CV</td>
+<td align="right">2.51</td>
+<td align="right">2.04</td>
+<td align="right">3.46</td>
+<td align="left">equal-tailed</td>
+<td align="right">1</td>
+<td align="left">P(exceedance &gt; 1)</td>
+</tr>
+</tbody>
+</table>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a><span class="co"># the numbers quoted in the sentences below, taken from the two objects</span></span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a>ex <span class="ot">&lt;-</span> <span class="cf">function</span>(o) o<span class="sc">$</span>table[o<span class="sc">$</span>table<span class="sc">$</span>quantity <span class="sc">==</span> <span class="st">&quot;exceedance Gini&quot;</span>, ]</span>
+<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a>fb <span class="ot">&lt;-</span> <span class="fu">ex</span>(b); fbb <span class="ot">&lt;-</span> <span class="fu">ex</span>(bb)</span></code></pre></div>
+<div id="the-cluster-bootstrap-a-confidence-interval" class="section level3">
+<h3>The cluster bootstrap: a confidence interval</h3>
+<p><code>lag_ceiling_boot()</code> takes the units of the study (host
+trees here), draws a sample of the same size from them <strong>with
+replacement</strong>, so that some units appear twice and some not at
+all, rebuilds both the reproductive series and the recruit series from
+that sample, and recomputes the exceedance. It does this 2,000 times.
+The spread of those 2,000 values is the bootstrap distribution, and the
+interval is cut from it.</p>
+<p><em>What it assumes.</em> That the units are a sample from a larger
+population of units like them, and that they are independent of one
+another. It assumes nothing about the shape of the counts.</p>
+<p><em>Where it is strong.</em> No model, no prior, no distributional
+assumption. The recipe is transparent: anyone can see exactly what was
+resampled.</p>
+<p><em>Where it is weak.</em> It needs enough units. With five sites the
+bootstrap distribution has only a handful of distinct values, the
+interval is coarse, and the bias-corrected version can fail; the
+function warns below ten units and flags a failed row. It also cannot be
+applied to a series that has already been pooled over units, because
+there is nothing left to resample.</p>
+<p><em>The sentence.</em> “The exceedance was 2.56 (90% confidence
+interval 2.1 to 3.2, cluster bootstrap over host trees).”</p>
+</div>
+<div id="the-bayesian-bootstrap-a-credible-interval-same-quantity" class="section level3">
+<h3>The Bayesian bootstrap: a credible interval, same quantity</h3>
+<p><code>lag_ceiling_bayesboot()</code> does not resample the units. It
+gives each unit a random weight, drawn so that the weights are positive
+and sum to one (a Dirichlet(1, …, 1) draw), rebuilds both series as
+weighted sums, and recomputes the exceedance; 4,000 times. This is
+Rubin’s (1981) Bayesian bootstrap, and it is a posterior in the strict
+sense: the prior is a flat Dirichlet on the unknown distribution of
+units, which is the least informative prior available for that object,
+and the weights are draws from the posterior under it.</p>
+<p><em>What it assumes.</em> The same as the cluster bootstrap, plus
+that flat prior. Because the prior is the same for every data set and
+puts no structure on the counts, it is rarely the thing a reader objects
+to.</p>
+<p><em>Where it is strong.</em> The sentence may say “probability”.
+<code>P(exceedance &gt; 1)</code> is a posterior probability, and the
+interval is a credible interval. Numerically it tracks the cluster
+bootstrap closely, because it is a smoothed version of the same idea, so
+nothing is lost in exchange.</p>
+<p><em>Where it is weak.</em> Same as the cluster bootstrap on the
+number of units, though it degrades more gracefully because the weights
+are continuous. And the reader who does not accept Bayesian probability
+statements will read the interval as if it were a confidence interval,
+which is approximately right here and not something the package can
+prevent.</p>
+<p><em>The sentence.</em> “The exceedance was 2.56 (90% credible
+interval 2.1 to 3.1, Bayesian bootstrap over host trees); the posterior
+probability that it exceeds 1 is above 0.999.”</p>
+</div>
+<div id="the-negative-binomial-model-a-credible-interval-different-quantity" class="section level3">
+<h3>The negative-binomial model: a credible interval, different
+quantity</h3>
+<p><code>lag_ceiling_stan()</code> fits a model to the recruit counts on
+every unit at every period: each count is negative binomial, with a unit
+effect, a period effect and a clumping parameter. From the posterior it
+takes the <em>expected</em> recruit series, the series the counts
+scatter about, and puts that through the ceiling arithmetic. The
+reproductive record enters as observed.</p>
+<p><em>What it assumes.</em> The model: negative-binomial counts,
+effects additive on the log scale, and priors on the effect scales and
+the clumping. The priors are those of the companion paper and are named
+in the help page; they are working priors, and both are arguments.</p>
+<p><em>Where it is strong.</em> It estimates the object the ceiling
+actually bounds. A count series is always more concentrated than its own
+expectation, so the two bootstraps put an interval on a quantity that is
+inflated by sampling noise. This route removes that inflation and asks
+whether what remains still exceeds the bound. It is therefore the
+conservative reading, and the gap between its estimate and the
+bootstraps’ is itself a number worth reporting: it is how much of the
+raw exceedance the counts alone could have produced.</p>
+<p><em>Where it is weak.</em> It is a model, and it has to be checked:
+the function prints the sampler diagnostics (divergent transitions,
+Rhat, effective sample size) and warns when they are poor, and an
+interval from a poorly sampled posterior is not an interval. It needs
+<code>cmdstanr</code> and CmdStan installed. It refuses a reproductive
+rate, since the recruits must be counts. And because it estimates a
+different quantity, its interval is not a check on the other two:
+agreement is not expected, and disagreement is not a fault.</p>
+<p><em>The sentence.</em> “The concentration of the expected recruit
+series exceeded the ceiling by a factor of 2.1 (90% credible interval
+1.6 to 2.8, negative-binomial model with host and census effects); the
+posterior probability that it exceeds 1 is 0.99.” (Illustrative
+numbers.)</p>
+</div>
+</div>
+<div id="the-four-ways-to-cut-an-interval-from-a-set-of-draws" class="section level2">
+<h2>The four ways to cut an interval from a set of draws</h2>
+<p>Once a route has produced its 2,000 or 4,000 values, an interval is
+cut from them, and there are four recipes. Two are for the bootstrap and
+two are for posteriors; the package offers both of each and defaults to
+one.</p>
+<p><strong>Percentile.</strong> The 5th and 95th percentiles of the
+values. The simplest recipe, and exact when the bootstrap distribution
+is centred on the estimate and symmetric. It is invariant to a change of
+scale: the 5th percentile of the log exceedance is the log of the 5th
+percentile of the exceedance, so it does not matter which scale you cut
+on.</p>
+<p><strong>BCa</strong> (bias-corrected and accelerated; Efron 1987).
+The percentile interval with two corrections: one for the bootstrap
+distribution not being centred on the estimate (bias), one for its skew
+(acceleration, estimated from the leave-one-unit-out values). A ratio
+such as the exceedance is skewed, so BCa is the default for the cluster
+bootstrap. It is also invariant to a change of scale. Its cost is that
+with very few units the corrections have too little to work with and the
+interval can collapse or miss the estimate; the package flags that row
+instead of printing it.</p>
+<p><strong>Equal-tailed</strong> (ETI). The percentile recipe applied to
+posterior draws: the central 90% of the posterior, 5% in each tail.
+Invariant to a change of scale, for the same reason as the percentile
+interval. The default for the two Bayesian routes.</p>
+<p><strong>Highest-density</strong> (HDI). The shortest interval that
+holds 90% of the posterior. On a skewed posterior it is shorter than the
+equal-tailed interval and sits closer to the mode. Its drawback is the
+one that matters for a ratio: it is <strong>not</strong> invariant to a
+change of scale. The shortest 90% of the exceedance and the shortest 90%
+of its logarithm, transformed back, are different intervals, and the
+difference is visible on these data:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a>ex <span class="ot">&lt;-</span> bb<span class="sc">$</span>draws[, <span class="st">&quot;exceedance_gini&quot;</span>]</span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a>eti <span class="ot">&lt;-</span> <span class="fu">quantile</span>(ex, <span class="fu">c</span>(<span class="fl">0.05</span>, <span class="fl">0.95</span>))</span>
+<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a>hdi <span class="ot">&lt;-</span> <span class="cf">function</span>(v, <span class="at">level =</span> <span class="fl">0.9</span>) { v <span class="ot">&lt;-</span> <span class="fu">sort</span>(v); n <span class="ot">&lt;-</span> <span class="fu">length</span>(v); k <span class="ot">&lt;-</span> <span class="fu">floor</span>(level <span class="sc">*</span> n)</span>
+<span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a>  w <span class="ot">&lt;-</span> v[(k <span class="sc">+</span> <span class="dv">1</span>)<span class="sc">:</span>n] <span class="sc">-</span> v[<span class="dv">1</span><span class="sc">:</span>(n <span class="sc">-</span> k)]; i <span class="ot">&lt;-</span> <span class="fu">which.min</span>(w); <span class="fu">c</span>(v[i], v[i <span class="sc">+</span> k]) }</span>
+<span id="cb4-5"><a href="#cb4-5" tabindex="-1"></a><span class="fu">rbind</span>(<span class="st">`</span><span class="at">equal-tailed, on the ratio</span><span class="st">`</span>       <span class="ot">=</span> eti,</span>
+<span id="cb4-6"><a href="#cb4-6" tabindex="-1"></a>      <span class="st">`</span><span class="at">equal-tailed, on log, back</span><span class="st">`</span>       <span class="ot">=</span> <span class="fu">exp</span>(<span class="fu">quantile</span>(<span class="fu">log</span>(ex), <span class="fu">c</span>(<span class="fl">0.05</span>, <span class="fl">0.95</span>))),</span>
+<span id="cb4-7"><a href="#cb4-7" tabindex="-1"></a>      <span class="st">`</span><span class="at">highest-density, on the ratio</span><span class="st">`</span>    <span class="ot">=</span> <span class="fu">hdi</span>(ex),</span>
+<span id="cb4-8"><a href="#cb4-8" tabindex="-1"></a>      <span class="st">`</span><span class="at">highest-density, on log, back</span><span class="st">`</span>    <span class="ot">=</span> <span class="fu">exp</span>(<span class="fu">hdi</span>(<span class="fu">log</span>(ex))))</span>
+<span id="cb4-9"><a href="#cb4-9" tabindex="-1"></a><span class="co">#&gt;                                     5%      95%</span></span>
+<span id="cb4-10"><a href="#cb4-10" tabindex="-1"></a><span class="co">#&gt; equal-tailed, on the ratio    2.056462 3.066874</span></span>
+<span id="cb4-11"><a href="#cb4-11" tabindex="-1"></a><span class="co">#&gt; equal-tailed, on log, back    2.056462 3.066874</span></span>
+<span id="cb4-12"><a href="#cb4-12" tabindex="-1"></a><span class="co">#&gt; highest-density, on the ratio 2.001621 2.998433</span></span>
+<span id="cb4-13"><a href="#cb4-13" tabindex="-1"></a><span class="co">#&gt; highest-density, on log, back 2.069585 3.071194</span></span></code></pre></div>
+<p>The two equal-tailed rows agree to the last digit, as they must. The
+two highest-density rows do not. An HDI is therefore a choice of scale
+as well as of recipe, and the package offers it
+(<code>interval = &quot;hdi&quot;</code>) so that a user who wants it can have it,
+with this paragraph as the reason it is not the default.</p>
+</div>
+<div id="the-two-probability-statements-side-by-side" class="section level2">
+<h2>The two probability statements, side by side</h2>
+<p>The cluster bootstrap reports <code>p_boot</code>, the fraction of
+replicates in which the exceedance was at most 1. The Bayesian routes
+report <code>prob</code>, the fraction of posterior draws in which it
+exceeded 1. In a table the two numbers can look like complements of each
+other. They are not the same kind of number.</p>
+<p><code>p_boot</code> is a <strong>one-sided bootstrap
+p-value</strong>: the achieved significance level of a test of “the
+record is no more concentrated than a delay predicts”. A small value is
+evidence against that hypothesis. It is not the probability that the
+hypothesis is true, and the sentence “the probability that the
+exceedance is at most 1 is 0.0005” is wrong. The printed summary says so
+under the number, because the misreading is easy and common. It also
+cannot be resolved below one over the number of replicates, so 0 is
+printed as “&lt; 1/R”.</p>
+<p><code>prob</code> is a <strong>posterior probability</strong>, and
+the sentence “the probability that the exceedance exceeds 1 is 0.999,
+under a flat prior on the distribution of hosts” is exactly what it
+means.</p>
+<p>If you want the second sentence, use the route that is built to give
+it. Do not take the bootstrap’s <code>p_boot</code>, subtract it from
+one, and call the result a probability.</p>
+</div>
+<div id="choosing-and-reporting" class="section level2">
+<h2>Choosing, and reporting</h2>
+<table>
+<colgroup>
+<col width="25%" />
+<col width="25%" />
+<col width="25%" />
+<col width="25%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>you want</th>
+<th>use</th>
+<th>interval</th>
+<th>says</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>no model, no prior, the standard recipe</td>
+<td><code>lag_ceiling_boot()</code></td>
+<td>BCa (or percentile), a confidence interval</td>
+<td>“90% CI”</td>
+</tr>
+<tr class="even">
+<td>a probability statement about the same quantity, minimal
+assumptions</td>
+<td><code>lag_ceiling_bayesboot()</code></td>
+<td>equal-tailed (or HDI), a credible interval</td>
+<td>“90% CrI”, <code>P(&gt; 1)</code></td>
+</tr>
+<tr class="odd">
+<td>the quantity the bound applies to, with sampling noise removed</td>
+<td><code>lag_ceiling_stan()</code></td>
+<td>equal-tailed (or HDI), a credible interval</td>
+<td>“90% CrI”, <code>P(&gt; 1)</code>, and the sampler diagnostics</td>
+</tr>
+</tbody>
+</table>
+<p>Whichever you choose, report the route and the recipe with the
+numbers, because the reader cannot tell them apart from the digits:
+“2.56 (90% BCa CI 2.1 to 3.2, cluster bootstrap over 23 host trees)”
+carries everything needed to read it, and “2.56 (2.1 to 3.2)” does not.
+<code>ceiling_draws_table()</code> carries those labels in its columns,
+and <code>rain_forest()</code> draws the routes side by side so that a
+disagreement between them, which is where the reading gets interesting,
+is seen rather than searched for.</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a><span class="fu">rain_forest</span>(<span class="st">`</span><span class="at">23 host trees</span><span class="st">`</span> <span class="ot">=</span> b, <span class="st">`</span><span class="at">23 host trees</span><span class="st">`</span> <span class="ot">=</span> bb, <span class="at">index =</span> <span class="st">&quot;both&quot;</span>)</span></code></pre></div>
+<p><img role="img" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAqAAAAD5CAMAAADP/HfhAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAMAUExURf////b29uvr6wBystVeAPn5+U1NTfHx8fj4+AAAAP39/vbg1P7+/uq0lfL2+nSnzvX19ff39/Dw8FlZWeDf4HR0dAQEBPz8/LGxsRcXF+np6oyMjOTk5Pr6+oqKikBAQJCQkPz7+0FBQQ8PD2JiYvPz8+3t7QEBAWVlZVZWVp6enszMzBQUFCQkJIKCgn5+fqKiotTU1LGwsV5eXsXFxZiYmGtra+7u75ycnJeXlwICAmdnZzU1NaWlpVtbW8PDw5WVldPT0zw8PMrKys7OznV1daGhoW9vb0RERLu7u66urj4+PgsLCx4eHrOzs46OjvT09NDQ0CAgIJKSkpubm8DAwIiIiAgICHFxcTAwMOPj49zc3Hx8fJqamqampkhISPLy8nd3d6ysrNra2jk5Oerq6tHR0ScnJ6urq21tbSwsLLi4uN3d3U5OTmNjY09PT6ioqL6+vsjIyHp6ehsbG3l5eSEhIVFRUejo6Dg4OMLCwkVFRWlpaeLi4igoKGRkZLa2tmBgYBISEgYGBt7e3nBwcDQ0NNpyK11dXYODgysrK9bW1t/f3319fRoaGoCAgODg4Ds7O9fX1+bm5uzs7MfHx+fn59XV1djY2FVVVampqY2Njaenp3Nzc7W1tUdHR1hYWO/v75aWls7g7c/Pz4mJiVxcXK2trYeHh7m5uYuLi8nJyR0dHTIyMv79/WxsbMTExNnZ2e6/paCgoIWFhbe3t/fl25SUlC8vL4SEhEtLS7q6usjb6+mvjey5nNx/QeWgePrx7IGBgeOYa7HN4lRUVK+vr/TczqXG3tlwJmOfyufv9r3U5/TWxp7B3FiYxvD1+XCmzIKw0ht7ttdoFUqRwrjS5d7q8/n7/ZK62CeAufz18eKRX92ARPDHsIq11dZgAsLX6TiIveCKU+zy9/vz7mqjzNZjB+mykfrs5f339fnp4eekfKLE3fLSwG2iyfb5+wx2s+emf/X4++esiu3Xytt5NuPt9ffi19Pi73mr0drn8fP3+uu6nf359v3590y8bq0AAB94SURBVHja7JvZU1NZHsd/2EY4t/IQQC8JsoRECIQgYQlgAm40skVWWdIuQIMgMAoRW0EiCAilgkjbtmJwL5dp0GkdtGj1ZcrqtqrnZeZhpmarmnmbh3mcmj9gzjl3ySUBZxjHakvO9yG5Ofd3zvn9fudzz3IpAJiYmJiYmJiYmJiYmJiYmJiYmD5IccV3M6PJxXpzWTz+UnVvz8ZflXel+9VRPuOKt7elqu71L0qoxtqibcaXp2vk0uac5VosLpgRrz6zvvfYA8KJVi3+PVciW0Yo87Bi5e2QL8fNK6yLnVAOQsUq4zPJ7ugoDQWwmTxFLQkAR3rMubj8ZaY0ZvY52fhkw9sbi0eV/kXNKMnjGdKZMG2D++RSrU68SN2+2HwcOfLEtloM7zv2gHCCx6YWF5Svk91Uofx36Oqx72nzpqywLnZCMQj/aQw+NnWjaeC6bsAUnwxxRTGgckZC1XrYtm4p4z07/wdA08hjcMMZpyyVAS3yAzTdyAkXmQMj7x3QgHCi0DKAFv3EgK5gDD42tfeTnDnjrGTatA5AaF0jDOxQG+TRiGiagLzMh5s8X0N+v64pGKabkjYfBLhn6xwq67lEoLKCao/j9sWvKKCNM0meQ2o/QMGNrkCeFiOg36pP1mNAx+sz5tVgniyyCRN595EhcxwUH3Y2UcYb6/R6Aqi6SZjJW22V9YnuCFuGOVg2VjWlJdZykO4YMkdI4BeOvsLXlfVJr/Fmo/Xu1YKtZkz8HVtGzDjxVDBVhkPC6AT3hh9Gt0GQBzkyoaI8vPAooXXmwZ5ZgQ3ipgq5a2+/uExiocZSKyLam8MHc6LlHg+RZfxKk7AaZxY4MgmgYsMEUDFfSrPWhTnPqFvIa6e/E2QQhOCEMUjftHU2eJUA+hJ/zKPIFxn4u8bEwYNd+SnqV0m+bRk6ChkDh60O094ziSneoLmRLG+D7iCUPHIVpicVYFxSuqErtnu+pYMjgJ5teJNjsfkBGnwNL0xDPRB2vqG7azgXtHZXTm2dDWoGNrmpWf1wbfWxa+q0UYuXTmJxl2GBAvqdV5xyW+az7Nc8eQP3ZWMNcn3bBK8nZ2xVm4TO9JZa6/Fd4DZt6jYMR4F2MldfzVdDUFFf3jk+SjZVhkPDyHNuT09EaSobWmgOchmu3+C1ENzRcL3BKQBK3FQh4znzY+yTaCy1IvDpHC27b6yVezw9gqFb6Kf3nvAb9h/nrSA1TAAV86U00xpTzLXOm0Je/Z0ggyAER51Ot5jT+2NXB6BevHKFGdCZxHpyMkIJMFWQuINr2QEaTgFoHweczkqXl9hBXBibCiUIz0mnh1VwdKQxzHEGYBtKIIBauvGAuhWApnR07DYNPqWAzj7Cc2sfBpRU9oTLS3wacgsfh3zr34JyiScV4uow5Ximl4w1aBZgynQT4JSw/K5ByQDftKvPF+If57/FlfDZ7It1YG3Dp8ALXtlUGQ4NQ4+fggiLlS7xNic+Ktp2q8u/xK7eUi7xuLdvUIVsLLVCISzA2dpwWO5RZcGnK9cBem+sGgNst8oNY0ClfCnNtOgkwOyk4JC/E3gQpOCI018kqSHKrFodh6SzaKfzHLqS1Y5/5KMQIVlDYMttcfsAJfTu3EJGVGV6EBMTU3QLSng8JirLK6jPwjen38y+RFEE0HOml1v2Kvegts7rrnANUECTSEP3MaAjuPL+FhlQLx+EZ8uqmeUBteMKj6vJIyEbawioZegF9sdJT8Ynebq1CEY3ybnGBdo6/H23FG600zZkU0U4QhiwpniLh8+hgB75DhsVot6Mi2RKVgLqJpvUCdlYakV4f/G1taetX+4R9v0AlTxdhINMn+LPPqvcMN2DCvlSmIGWDyUD0Esd8ncCD4IYHHU6n+9IzYxYJZtQ9dybU/mmkGfh5B3PbmHb6XoaXKdJ7vcBSs7fsXREs5FnI1YOlFDbC0dCnZmgum0MXzggAAo1BbtRzOIl/vLxsxwFNLYcF9lyhUNSjg/QPbSxnTHLA0oqjM0DPB+WjTVkTjlgnyX+PCFFJRbxqIPLYXuHUMlWClubaLlsqghHCGOeL9rc2SYA2vUlMdoYue4CYc3vkBSFzsjGUis0yqqB9uuF/XKPkGaK3Oegty7T2b3UKjeMAZXypTADLYn8KTpDHfJ3Ag+CGJxwSJqYKUWGxlXB5zhZo2LwhDiJn8jal8J85oEnLRCK4v0BzcHJMZ4j+/58EdCr/KE2Dk7be8k5iAAaWpINXLVdtXgPug3ZKKCFD0j2AwEtRtNkhX7+XwEqGVNAM8kzwT2krwmT8Q4FLg1p+I34x7pEGZfULnLQ2S6bKsMhYYTgHSJw/H7M33oowPHAZ+nRr13Y6EQgoLKxEtDBE7hSu8EHKLTs2i2+9q3C3mQjq9wwBlTKl9JMS94gmJ0czau/E3gQxOBCidOZOJBL9uerAtBIvgbyda0QMnmXa56kyVINTEC2hWt2Bcygnx+biojRubnkkU4RUGjRlZOV6Sp81Yd+hgFVFxU0BqWexwt4q/IUXz8yRQAdNz1r1tsVgIa3ryG3QwaGpiJHH60JAFQtNqMEVDKmgMaNXdurKp+8Q2f+vsGo7LMFkNp2MsRrPy3jcslkDpq2PJFNleGQMOKOz3ChF1A1VKCy+DSkD15zywGt/K6QTl4EFLspASobKwHdt1OjdvMtCkDNVVXiGjw7kB+8DwMqNYwBlfKlNNOiwoTW3FQhr/5O4EGQgiNO7+mYUm/DbbjTVwGh1zucY5+T/edxY5WelsyTzVXiVoM5ANCpKtQakmqvO68HCVAzOkWeeGNV23NLGVniW7uc/Bje56P9SkDDjp1QY0DhZKkxvKfUB2g3LxDZbDDxBnzA8AeUQzkBgErGFFBY34CcDU+EKhNFpuGsSNAUmPiUbvDhUqbj2/Q+U2U4NAxth854Pwuf78PRM7h5jDcm4tmqLIVvaxIBxW7KS7xkrAT01GGn7pp1pMIHaIL959Iuv8nJDxnwtCs2TPagYr6UZtphB183GiHm1c8JMghicMRpVZbOacQtOgyrYhK9LH73iud290H6Xu7KUrZk3xMXGVgefdB3rcletqun+IwBF28rK4ZKf8VZyXu9RcbxYb7rMI1wZvFzUR2pDjCVwhEWEnEeo+8uIqPFQnWgm0pjpcSOZSXwE/K16o5UMdo/Xz4zzHZYiLKTQCfEPojTXK8amP7/yrPc09TUPfzo46zYUZi0QjP5j2tMP6Ei7veZcs0ff5xRyBW1QrPOXIbHByEVi3K1JYOJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiem9Sf2rX7AkMH24+uvaX7IkML1N3Pd///Wffrv0vXvNi3+H+N2vfLpEpZDlrJfQP35c+7u/BJQWe73aq2+p1TodUPTOnjB9oPrjbz7B+vMflrx5YfE/M8/V+93fvD+wzuZi/4u36F9r1679Z0BpbHhPYUfq8rV2vQns9V09YfpA9bdPqH4fcONKPAU0jAPIBghu1gCXd6QC4M6/2TvzoCjPO47/luy7K282M8thXkKWwgIiICBFDFBAR7doqBEEpV3EY2HBA8OxHqCCpDF4BBMViSJEK9h4YESqWa1HvWLVpjPpdKZOZlKPOmMdtXH8o5OkTmd6PO+7F7Brs+KyAfv9/LH7HrvP+93f++F9nvcd5n3fFIj8tRqLFimzxfeQ96R7kUetZAermCscaQIFaULNabQkM5YRCaO4QN5pGw/uMUFvn3AS1CTevkbNXsStirdUUXPEGdnGSSs2JvMjW6t84wzqnYS2zuiTRMxtT8Kv2So8IQkYgsfO34n8ySLoC1+KM/+wr5wxf3Jogijo8pXE+wo55ZHxOVHNNTPp0HRFUyDld7wi3qAzIfzk+lo/Olg4v8FIZR3hC/fzXctDdfXhHd0t4sSWmFcS2pvePryC8lYVBtQ0Ojb+6JjIebnIt9L0o76CjmlQCZGhMWsLhHw2zpg26ePpbXEHKLh7Qmk9mdPI2mro5No46Ybh1iSm0tqIXb2SSLltSYoyOpoLlf2TgKHKH19w4gv7yi1ZpA0oswva1kWbMinpNUpZyFHJu5Q/T7qLUUKolq+aYmrwo0+KqWcsCVXJtDFb+YYfLcpjE7SlVsWna0gzms/zbaTqCsfGb8j7c6eXoNPL80dPJCMbUaSm08F9ZMygtqUU1a1qT6cQs9qcprK1WkSz6h1JZGt1tOOw1p6ELLmtSTJLiF5f0j8JGKoIvxH5s9XN34ozf7Wv3GOyjkEtgga90THPIAraflKvT1+oyrecPSWEEc3t2fc+UVmctlxHlLhbtCF6+W72dVELtt5QsqXCl8tbTxT8M0fX+vhzxgarm589YjOPewla0hL4i8NGKoqdenIcvRnPm2elvKzX65fnaRqaPywSj6DWVpvYGVWAI0nrdPZ3o5joSGLJbU3CF+SOWxvUPwkY2vzB4ufv+y3e2EXUomaCHtaQwVcgZVJbqShodcAChirfcvejhF8TzQxLLBYfeMArkpkjU0UbqDGtaaakRSr5lX+6Oth3hKjFe3F9t3HMfvQ85zwGpcpZuprYSe3jiOp08WUpEWPYdjtJ2D4n4qg5zdZqOJEpwJGkbDMTL9zUK4mU25KExlYlzZ6Q5CoJGMJXmf4pnSP1v870k8U816RhgmYUUI6vULmaKahdEkmdm6MoKJpsgtZ1ykJ3lsWnUFgtJeoFdd08is6JypBR6mI2IWqxNUJLQb7qPN+jFFbZZxNHHl6y0e9qPRNUZcxfnbaO+EimX/V89hITRGUZHySxv4U6kznN1qpDUCkJKUxkfLnMnoQsuS1JaJqJgjcfcJEEDGl++eVfvnDq8Ua1NZXGil18UNzk3ZuFj6bVxbfT1ri3aXzE6/OL7ILur5nOlAmLWF8XTP61DTVzeEqMWJS2vm5VkTgharG7uWJZ+ba8+IyMPSluJgr1Hf2jpvG0Mryibl8hGyS8c5wor6G5tJ1GBEzurudYF29t1SGoJYmupjQ+u1cSS25rkpzuyzHprz5VEjB0MdiemCPdVJ+U4izPsaFrn3victJVnRCD5SvS7WE5nlT+1gmyXCJifoXTAJ6R5S+dihkapPvVWaTyk5GjVeck1k/Zk1hyW5PwygEnAc85eQO/r3bJ6fFDJAl4fvHfPuCv6o6rhkgSAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAeANuQeaiIqKUAtuCM2oUxRX80V1nDETZLeKMcQwK4h1GVdV/MrN0HjUusy1ZXIaquPKzuCrN3K0j8w/EuegcVMQ7RKayl5XlKYKB1Jw6ULA+8gL0J20/q8vqUG7Telaj4HIZKuIV/POlJ7V8QK21lDu1rm2+mpo1KIsLanVSh0MkPqIu1oyCeIfk00Syj5cuLRMFPa2iGBMEdT1UP2wb+VSvINqzDRXxDj/sZv1VT09GkChoGFFxDgR1zUmjdUJ5Ut1ahXp4iZB46anoiyVBpxCtgKBP4K0ropxV7DiatcS8CPXwFtXTdqqE7aXHIeh3kFe4iZTvi9c6dK9NNqAeXiOptnDh6TMEQb+LrsvNqz6NYhP8tGWohjdR45KJm4XCBTgAAAAAAAAAAOz0MHmBJ5vjBY+2NkLlyeZCBt6akKzzUAjBU+fjIdyQ3GeeJlAx0pPNcWpPtjbCx6NXV5QDF1SmCPBQCL8Rnvo1/p7aZzIICkEhKASFoBAUgkJQCApBISgEhaAQFIJCUAgKQSEoBIWgEBSCQlAICkEhKASFoBAUgkJQCApBISgEhaAQFIJCUAgKQSEoBIWgEBSCQlAICkEhKASFoBAUgkJQCApBISgEhaAQFIJCUAgKQSEoBIWgEBSCQlAICkEhKASFoBAUgkJQCApBPSnoresQ1AntLQg6OIJ+dfPY033t+rWv3RT0xqVhLej1my+5//lz9x48q6CPb96CoM6CnpCffbqv/V1++yv3BP3s/LAW9KL8gtsfv3hNfulZBb0qPwdBn13QE7fl8hsQtB8X5HL5VQg6FAS9w3aF/HMI2ocXxaLcPAJBB0XQCy8+Bf8Sd4V8w1XnNd84LRn2gt5wtyrnpaqcdbXq6jfuNnIMgroWdPAY7oJ6GwjqUtA7L7nPDWsp733ttMp5ybXhLuhN94py/5q1Kq4qef+su7W9AEGfeQx60bYr5A8xBrVz31YUV5c3MAb1pqBnN9h5AEGt3P3WXpSHEPR7P4t/8i79f77M9D/2GQSFoBD0ORb0yN1/D5ag168Pa0GP3P2bVwUV7v4HgjoL6jHw30zPKOj3AQSFoB4TdI1O/HGcrtXygO9kFw1zvV4hKAT1qqCnDlbXT6KU6Mx9B6X5ymCnj0zRSUOFeggKQb0uqHEqke4U/TyH+P0tFkF9OsV3bYt4RFWv8SPu3dUhbLKzQinIRhmIDBpxjSo4SrR2dicEhaCDKCjPfplpjjjVGuAnCZowdn8mUWb9smgNJacfqkzWjRu5ia2IVZi3ZUXXq6rfnpO+g9TFI9MPqaJ6zOvCICgEHdSTpKjoBew1TJFj6eK7SBOjGhPN0ZK5lKCjwGz6qdTFc1VkrE3hldEhVJBIplTiDxpNYaTN9LOq7uPgI4XeB/TFOoRX9Vo0W9GBuvTD+VikSS+Q3oPrJQ8rNUS16l2xrE+fICTHnMpW9xJ0MTvc1u/dmxutSkjYuzcr0Sda366xtqOSOdip0Ms8yCilJ1sz+Kg92VyKm60JzmWKUnR4KITS4KlfE+WpKg9wn4X097MxUtSviB3Zq1NtJ0mX1V1zicraeJoxMWFdL0GzmKDmIoYqIYe97iChNTZmDbp4dPGD1sV3jtsmvl2ZS5w+2yFo51tKOjCWXs0jnxghN1nqwqu0oqCGjUr6VS6ZcgX6MHniLKLiMRAUgg6aoPMUFRUVkaTOHalfxDsEpZKOnuIUMu4urjTRkhiTuGbshB8zQSmoI2uFhtTmSP1MnjPre8I4CApBB/MkyfoT++01rUWKGeLi/7JztkFNXWkcf5BJ4GYyNr70BmJ4CUESIkIMoBhetKYISgAFRK0vlMbCIEVFFEVRRMRpFW3K6lQBtYpI68ugszoj6ifH7uzs7hRZR2390tFx9ttO2+mHne7uhz3n3nsuIYAFFiTo8/+Qm/ucc57z3HN/nOecmxCFWCaRqBVL/IRTRSA+ZkJAXwegYyoEFAFFQBFQBPSNB/Rh74PxA7S997fJA6i697vXCOjz3qcI6HAA/av/34fb7OmT5z+PDNAH/n+bPICq/P8yCkC/v/fkP6MB9Dv/dgR0TAH99R/+/v6PniCg/XTvGRmVnocI6MQDSvkkakdAPZPKL8Kg9CCg4wjov6cOR7+JfPr3DCzSPRyq0Z8nGaDC1eimDl+90qg8H6Ts5YJXtfwBAR0uoOOqSQXo6xUCOkxAX7wzHPVIw/poYNFPQzZ6PLkAfSZczU/vDF/PpFF5PEhZb++rWj5GQMd2DfrfR+Kt+BHXoP1WkoJ+eYlr0AnfJD0QbsWLqQio50Omx8Ko/BM3SRMPKNzrefTix6n4mKmffv7hxaOe54CA+gCgQ+qtflD/inuGgI4FoN+3/2v8AH3Z/nDyAArtT18joC/bf0VAhwPoGAi/LDIKQCdaCCgCioAioAgoAoqAIqAIKAKKgCKgCCgCioAioAgoAoqAIqAIKAKKgCKgCCgCioAioAgoAoqAIqAIKAKKgCKgCCgCioAioAgoAoqAIqAIKAKKgCKgCCgCioAioAgoAoqAIqAIKAKKgCKgCCgCioAioAgoAoqAIqAIKAKKgCKgCCgCioAioAgoAoqAIqAIKAKKgKJQKBQKhUKhUCgUCoVC/a40F303tn2OQJ+JJUHrW2NjKLmhfhv4VNws9NnYur/eVvuej8RyV6nwqbE5YbYs7lK8+Xzqa3f6LKCuDABHt0+Eop2108cAtXYChK968wF1uRw+C6iK5PfK9b6RZyq1PgZoiAHgfvnbkON9F1CiKHOJr4Si9Ll8esWsQUAneAGS7DtJzOcArUz+AyCgE6pDkQ5AQIdQUFkUIKATqvPxzYCADqE9azSAgE6sNiorKioiEdBBZaaDsxRQKBQKhUKhUCgUCoVCoVCD6cryETe5kTTCBlH5mlHFtmIQg6tgqNqLB/salipfr8jfDQeG/HwsV0fLR6CgBPmty4L8jLtylSNuYtsxUqK5E6MJbU/RIIacoTrXxiwYxBpivzKbWwl1Q30DpqQeaPkIFP1Z33ulGwF6iwEtWPJ7Bk9djBii4JUA3pn3/wBaWYcAjUqniqNjPyZJbyHJiuuvk7SU0XhXK5vlo771UsFlAqg+dkZdUggYivWhX8VNAe/66mIpq0V9HZ2RQAF1JCfT7501n/m2+L0+f9br3WW3jtEffohdCStyZ2Rsp1NYan3VKgao5Hflmuj7JK2WXPgyPc1C6p9PjA89SslPrreQ4tSEzsjak+DYG1wcQH3OhMp3v21cJBpKYuU4+uIV/tJyxeO87nprFLD+tcVNFMDUoL7e9OFp4XPCxcrL1ooAq7ZtqbcYiCGheEt5W6X0hxiZdjmgL2oxCAFQdnGGmIsI22jWlQ3zW4qCPwaHaRk0pkyD8JhCa/VS2cyOAZuL2oqcStA7G3M6jIWg4A6fSU3ZBN711bdbBLcB1TWpZfY2sNmzL6znrRBlrDpQbG+S66WVVtS77ISci/Yov7URbWf4IIDi7A3pByVAJb+VpshtEQf1EHQ8JTyfzwe/zJrUz3g93D/empgXCRC/v8KabFp3yDy3xY/61KU6F9vM3DzBkBMsxyHHKyhzjpizjZHLd90B1n8It50CWF8l9zb9SNG2rQdTxEa1N0VA1xwszN9xWg17+DNJpUaRXluMxbY3TI5aCoICKl8clMUibaNQGM08YXEAHdUtDS6YwpF7902ZmpnZMfcLNcA5JVxPJ/PKuxXkhpM7c5Kb4l2fqdAYQl8CbRyZlG8Gq7bbo0BtOST7S7tG/JgbAarqIdE5GyAxW+3iPgGwiIAyv0cyyMmRLgjiXAA7lWAtJX6PtbhNZwH2cQ6Ir1GBKtgqZHTBZ3gLXWKKBgIoi4PFKwS3IEb8DyYliff8ribWvwegUm+Xr5KrrpEA3bRNAHQeRyZN+nL7GMAnnAjozmg16C0KFjULggDKnJPIopG2kUthuhQaGpp5juTXMK6N7C14tadZLo7/nM5qJMUrTlqrSvcSQMle183t86ov+z1NQZzDnbI5FSQXcnrNYWNy5/S+emldpHyVc5oiZhlsuU1sGdxuWx7QWy4AKvkN4AiIELcWglaT44UsOFMmuM/hukkbpwXi15CzJQtFQLsEtJctrOWTGKAsDhav2FpcDqqdYn5m/XsAKvUWTb13iIBq+VUCoC28H2ma1xpAPcIREVAHvzkuQcuiloMggDLnAJ15iNvItYCrnUWUBKCq4KwAy2P6meVi5TF6y5Tgyttf1pZBAXXQKcztVV/2m0knUzd31Lafrj+5Q7BiYxpvdMj10mi5Nu/s3eMG2PoFtc3SWel85RYBlfzq6ZQEizdDUDA5JmZBWrFg32i/TJtch3i65Q6TAKU+/8hnxpaXyoCyOFi8QutGcRmi4U4KR9a/B6BSb2F0rZqYItXeLgBakE3PloR+QGdZCJMWqE2tWVzEh1LUchAEUOacRONE3EYhI91oJpC7l7gjtWEdmWzIpqG5fhozs+N9skOAXUqo20XSaFmEDKh3fab5tL7VrrBxZOtQYFK4c8h24ZxZ9ifABB2RZnKeXkp8fmALeZ9rBmgTAZX8avhZNBWbZWTitpKjZXEC3U2rOvUyoEkSoIFkvQsqfoNgIICyODwBVWdLX3a/mkrqmh2s/4GAZlyi/Eopfu1GAdBl3Cm6Armldf6JbMGkFJ9Awmm235Kins6CIIAy52L+QY1YocGVqjkN5WR4y6EuK0RbU6df8Gm6bGbHEn5pYDmvhPVLNOpKfpMMqHd99Qbx35QcXJJmTo0ZbFy3YeW1KnDbv1HprhXK9URAm1avvkEXdOEBU84lg2LTFp0rSwSU+Y0r3RPYYj8gI9NssvidirluOHx6nSL3+HkZ0I92uLXUp6G6VTXtGJcvGAigLA5PQI+msM38kYSQpdnTWP8DAT1quukKt7NN0n0B0MD99W5d49Up0FrdUhIvAVqw2a1exH0pRS0HQQBlzkl73CSNRoFx9tVkIRWYQsYwKrgQmjJNB+frmFk+Qs5cvrRYCfsqnMGnrQ0r5BvuVV/FSWm+M4Z3linAdrjLydVqAJYedtrNK+R6IqBQFEZfz+7gjWYy9+j38nyrtIuX/GrSTfxcsjthyJBZkS8l7WcWcc4isv9igLrzuBLBZ9DmYGPH/EjBQABlcXgCmsieTgbuNDXcWST3PxBQ2JNlnFGVJdZO2iXu4l0RJj6CpHfVrP1XOzYtFJfy84OdRqscNQuCPmZiFwcpQUjbqGTQ9T+frulnlot1as/iIeszqXcbxDcBs8XjCcWg9UTfIdKSWDHAr8LbrxTHbK9fiP1Q9qXtZ5DjkLU7oG+PGNW/f+9PDZrIy+dfSRsf40zJHCA4OEkCUFV/JNlUu/sNj07rfXHv52mQNdTYKjXmombV6k7pbGF6v8KtM/QnOmKG/dn8p504nqgxlrajxpQif8tDca3fZD6z63jDnWH/9o8rQoXjiRqHB8Ue7zVe/5mnMoxgrY8/NY9CoVAoFAqFQqH+t1EwCkbBKMAPAAbI85PqWvZMAAAAAElFTkSuQmCC" /><!-- --></p>
+</div>
+<div id="references" class="section level2">
+<h2>References</h2>
+<p>The BCa interval is Efron (1987); DiCiccio and Efron (1996) and
+Davison and Hinkley (1997) review the bootstrap intervals; Rubin (1981)
+is the Bayesian bootstrap; Gelman et al. (2013) is the standard
+reference for credible intervals and the HDI.</p>
+<p>Efron, B. (1987) Better bootstrap confidence intervals. <em>Journal
+of the American Statistical Association</em> 82: 171-185.</p>
+<p>DiCiccio, T. J. and Efron, B. (1996) Bootstrap confidence intervals.
+<em>Statistical Science</em> 11: 189-228.</p>
+<p>Davison, A. C. and Hinkley, D. V. (1997) <em>Bootstrap Methods and
+their Application</em>. Cambridge University Press.</p>
+<p>Rubin, D. B. (1981) The Bayesian bootstrap. <em>The Annals of
+Statistics</em> 9: 130-134.</p>
+<p>Gelman, A., Carlin, J. B., Stern, H. S., Dunson, D. B., Vehtari, A.
+and Rubin, D. B. (2013) <em>Bayesian Data Analysis</em>, 3rd edn.
+Chapman and Hall.</p>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

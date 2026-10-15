@@ -1,0 +1,205 @@
+---
+title: "The *Lepanthes eltoroensis* analysis"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{The Lepanthes eltoroensis analysis}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>", fig.width = 7, fig.height = 4.5,
+                      eval = requireNamespace("dplyr", quietly = TRUE))
+```
+
+```{r, message = FALSE}
+library(recruitlag)
+library(dplyr)
+```
+
+This vignette reproduces the analysis of the companion paper on the
+epiphytic orchid *Lepanthes eltoroensis* (Luquillo Mountains, Puerto Rico),
+in which reproduction is continuous in time and recruitment is episodic. The
+package's tests check the numbers below against the archived outputs of the
+paper's pipeline; here they are simply computed.
+
+## The two records
+
+```{r}
+lepanthes_monthly
+lepanthes_census |> select(period, census, adults, inflorescences, recruits)
+lepanthes_hosts
+```
+
+The monthly survey (1994 to 1996) counts inflorescence-bearing adults and new
+seedlings at 23 monthly censuses of four populations; recruits are defined by
+first appearance, so they are scored from census 2. The six-monthly survey
+(1999 to 2004) counts every plant on 23 host trees at 12 censuses; recruits
+are scored at censuses 3 to 12. `lepanthes_census` holds its system totals
+and `lepanthes_hosts` one row per host tree and census, which is the input
+of the host-level test.
+
+The lag conventions differ, and the package makes them explicit. The
+monthly lag model of the paper reads lag *k* at month *t - k* over a
+six-month horizon (`K = 6`, `lag0 = 0`). The six-monthly model reads lag
+*k* at census *t - 1 - k* over five six-month bins (`K = 4`, `lag0 = 1`).
+The bins are labelled 0-6, 6-12, 12-18, 18-24 and 24-30 months, counted
+from the first lagged census, which is the convention of the kernel labels
+throughout.
+
+## Concentration and the ceiling
+
+```{r}
+k_m <- lag_kernels(6, bin = 1, unit = "mo")
+k_6 <- lag_kernels(4, bin = 6, unit = "mo")
+c_m <- lag_ceiling(lepanthes_monthly, reproduction = "reproductive_adults", K = 6, lag0 = 0, kernels = k_m)
+c_6 <- lag_ceiling(lepanthes_census, reproduction = "inflorescences", K = 4, lag0 = 1, kernels = k_6)
+c_m
+c_6
+```
+
+At both time scales the ceiling is low because the input is flat, the
+searched maximum is attained by a pure delay and lies within 0.01 of the
+theorem bound (the small difference arises from backfilling pre-record
+lags), and observed recruitment exceeds the ceiling by a factor of about
+`r round(c_m$exceedance["gini"])` (monthly) and
+`r round(c_6$exceedance["gini"], 1)` (six-monthly) on the Gini.
+
+```{r}
+rain_strip(`monthly 1994` = c_m, `six-monthly 1999-2004` = c_6)
+```
+
+## What any lag profile predicts
+
+```{r}
+profiles <- list(
+  `one interval only (projection-matrix null)` = c(1, 0, 0, 0, 0),
+  `concentrated early (0 to 6 months)` = c(.7, .2, .07, .03, 0),
+  `evenly spread (0 to 30 months)` = rep(.2, 5),
+  `concentrated late (24 to 30 months)` = c(0, .03, .07, .2, .7),
+  `fitted posterior mean` = lepanthes_profile$weight)
+rain_profiles(profiles, bin = 6, unit = "months")
+rain_expected(c_6, profiles)
+```
+
+The expected series all but coincide and follow the slow decline of
+reproduction; none resembles the recruits counted (62 at census 5, none at
+censuses 7, 8 and 12, 32 at census 10). The fitted posterior-mean profile
+from the paper's distributed-lag model is among them and is
+indistinguishable from the rest, which is the identification problem the
+paper describes: with a flat input the lag cannot be recovered, however long
+the series.
+
+## How firm the exceedance is
+
+The ceiling is arithmetic and carries no uncertainty. The two concentration
+indices it is compared with are estimates from ten censuses, and so is their
+ratio, and a reader is entitled to an interval on them. The package gives
+three, because they answer differently worded questions and a user should
+take the one whose logic they accept.
+
+The first resamples the 23 host trees with replacement, rebuilds both series
+from the resampled trees, and recomputes the ceiling and the exceedance in
+each replicate. It is a confidence interval, BCa by default, and is read in
+the usual way. The share of replicates at or below 1 is reported as what it
+is, a one-sided bootstrap p-value, and not as a probability that the
+exceedance is at most 1.
+
+```{r}
+set.seed(20260913)
+k4 <- lag_kernels(4, bin = 6, unit = "mo")
+lag_ceiling_boot(lepanthes_hosts, unit = "host", reproduction = "inflorescences",
+                 K = 4, kernels = k4, R = 2000)
+```
+
+The second is Rubin's Bayesian bootstrap: Dirichlet weights over the hosts
+in place of resampling, and a posterior in place of a sampling distribution.
+The numbers are close to the first, which is expected; the difference is
+that `P(exceedance > 1)` is now a posterior probability under a stated
+prior and may be written as one.
+
+```{r}
+lag_ceiling_bayesboot(lepanthes_hosts, unit = "host", reproduction = "inflorescences",
+                      K = 4, kernels = k4, draws = 4000)
+```
+
+The third fits a negative-binomial model to the counts on every host at
+every census, with host and census effects, and puts the posterior of the
+**expected** series through the same ceiling arithmetic. That is the object
+the bound applies to, and its exceedance is lower than the raw one, because
+part of the concentration of small counts is sampling variation about a
+smoother mean. It needs `cmdstanr` and CmdStan, so it is not run here.
+
+```{r, eval = FALSE}
+lag_ceiling_stan(lepanthes_hosts, unit = "host", reproduction = "inflorescences",
+                 K = 4, kernels = k4)
+```
+
+## Why the pooled comparison cannot decide
+
+```{r}
+set.seed(20260903)
+cal <- ceiling_calibration(c_6)
+cal
+```
+
+About a mean that obeys the ceiling, negative-binomial counts with the
+observed variance-to-mean ratio produce a series as concentrated as the
+observed one roughly one time in
+`r round(1 / cal$p_gini[cal$null == "N1 best-kernel mean"])`. The exceedance of the ceiling by the
+pooled counts is therefore not evidence; the test has to be made across
+host trees.
+
+## The host-level test
+
+```{r}
+lepanthes_hosts |>
+  filter(!is.na(recruits)) |>
+  group_by(period) |>
+  summarise(recruits = sum(recruits), hosts_recruiting = sum(recruits > 0))
+```
+
+Three of the ten censuses are silent (no recruit on any of the 23 hosts) and
+one carries 62. Under the lag hypothesis, expected recruitment on each host
+is that host's own lagged inflorescence record, scaled to its own total.
+The kernels are the pure delays, every uniform window, geometric decay and
+the fitted profile; the paper adds 800 Dirichlet draws, which take longer
+and change nothing.
+
+```{r}
+set.seed(20260910)
+ht <- host_lag_test(lepanthes_hosts, unit = "host", reproduction = "inflorescences",
+                    K = 4, nsim = 4000,
+                    kernels = lag_kernels(4, bin = 6, unit = "mo",
+                                          extra = list(`fitted posterior mean` = lepanthes_profile$weight)),
+                    phi = 0.089)
+ht
+```
+
+The moment estimate of the clumping parameter under the flat reference is
+about `r signif(ht$table$phi[ht$table$family == "flat" & ht$table$phi_source == "moment"], 2)`;
+the paper also
+evaluates every profile at 0.089, the estimate obtained about a single
+pooled mean, which attributes the between-host spread of the means to
+clumping and is about twice the clumping the counts support. Even at that
+value the most favourable profile does not make three silent censuses
+ordinary.
+
+```{r}
+plot(ht, statistic = "silent")
+plot(ht, statistic = "gini")
+```
+
+## The verdict, keyed on labels
+
+```{r}
+ht$verdict
+ht$table |>
+  filter(phi_source == "moment",
+         label %in% c("flat reference", "pure delay 24-30 mo", "uniform 0-30 mo", "fitted posterior mean")) |>
+  select(label, phi, gini_expected, p_silent, p_gini, p_cv)
+```
+
+No lag profile, of any shape over the 30-month window, makes the observed record
+ordinary. Recruitment in this population is not the delayed consequence of
+its own reproduction; something else opens and closes.

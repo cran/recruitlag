@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+
+
+<title>The mathematics behind the test, and the functions that implement it</title>
+
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+
+<style type="text/css">
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+</style>
+
+
+
+<style type="text/css">
+code {
+white-space: pre;
+}
+.sourceCode {
+overflow: visible;
+}
+</style>
+<style type="text/css" data-origin="pandoc">
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #aaaaaa;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa; padding-left: 4px; }
+div.sourceCode
+{ }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } 
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.at { color: #7d9029; } 
+code span.bn { color: #40a070; } 
+code span.bu { color: #008000; } 
+code span.cf { color: #007020; font-weight: bold; } 
+code span.ch { color: #4070a0; } 
+code span.cn { color: #880000; } 
+code span.co { color: #60a0b0; font-style: italic; } 
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.do { color: #ba2121; font-style: italic; } 
+code span.dt { color: #902000; } 
+code span.dv { color: #40a070; } 
+code span.er { color: #ff0000; font-weight: bold; } 
+code span.ex { } 
+code span.fl { color: #40a070; } 
+code span.fu { color: #06287e; } 
+code span.im { color: #008000; font-weight: bold; } 
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.kw { color: #007020; font-weight: bold; } 
+code span.op { color: #666666; } 
+code span.ot { color: #007020; } 
+code span.pp { color: #bc7a00; } 
+code span.sc { color: #4070a0; } 
+code span.ss { color: #bb6688; } 
+code span.st { color: #4070a0; } 
+code span.va { color: #19177c; } 
+code span.vs { color: #4070a0; } 
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } 
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    var j = 0;
+    while (j < rules.length) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") {
+        j++;
+        continue;
+      }
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') {
+        j++;
+        continue;
+      }
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">The mathematics behind the test, and the
+functions that implement it</h1>
+
+
+
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="fu">library</span>(recruitlag)</span></code></pre></div>
+<div id="the-hypothesis-as-a-convolution" class="section level2">
+<h2>1. The hypothesis as a convolution</h2>
+<p>Let <span class="math inline">\(X_t\)</span> be the reproductive
+record at periods <span class="math inline">\(t = 1, \dots, T\)</span>
+and <span class="math inline">\(R_t\)</span> the recruits scored at a
+subset of periods. The lag hypothesis, in the form a distributed-lag
+model (Koyck 1954) or antecedent-effect model estimates and in the form
+a projection matrix asserts, is that expected recruitment is a weighted
+sum of past reproduction,</p>
+<p><span class="math display">\[
+\mathbb{E}[R_t] \;=\; c \sum_{k=0}^{K} w_k \, X_{t - \ell_0 - k},
+\qquad w_k \ge 0,\quad \sum_k w_k = 1 ,
+\]</span></p>
+<p>with <span class="math inline">\(c\)</span> a scale, <span class="math inline">\(\ell_0\)</span> the offset of the first bin (<span class="math inline">\(\ell_0 = 1\)</span> is the projection-matrix
+convention: the first bin is the census before the recruit census) and
+<span class="math inline">\(w\)</span> the lag profile. The
+projection-matrix null is the special case <span class="math inline">\(w
+= (1, 0, \dots, 0)\)</span>. <code>convolve_lag()</code> computes the
+sum for a given <span class="math inline">\(w\)</span>;
+<code>lag_kernels()</code> builds families of <span class="math inline">\(w\)</span>; the scale <span class="math inline">\(c\)</span> never matters for what follows.</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a>X <span class="ot">&lt;-</span> lepanthes_census<span class="sc">$</span>inflorescences</span>
+<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a><span class="fu">convolve_lag</span>(X, <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">1</span>), <span class="at">t_R =</span> <span class="dv">3</span><span class="sc">:</span><span class="dv">12</span>)          <span class="co"># pure 24 to 30 month delay</span></span>
+<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a><span class="co">#&gt;  [1] 509 509 509 509 218 216 237 225 142 185</span></span>
+<span id="cb2-4"><a href="#cb2-4" tabindex="-1"></a><span class="fu">convolve_lag</span>(X, <span class="fu">flat_kernel</span>(<span class="dv">4</span>), <span class="at">t_R =</span> <span class="dv">3</span><span class="sc">:</span><span class="dv">12</span>)             <span class="co"># equal weights</span></span>
+<span id="cb2-5"><a href="#cb2-5" tabindex="-1"></a><span class="co">#&gt;  [1] 450.8 392.2 337.8 281.0 207.6 201.0 192.0 170.2 141.6 136.8</span></span></code></pre></div>
+<p>Lags that fall before the first census are read as the first census’s
+value (<code>missing = &quot;backfill&quot;</code>). This asserts that
+reproduction before the record began was at the level first observed.
+The alternative, zero-filling, asserts that no seed fell before the
+record began, which turns every long pure delay into a prediction of no
+recruits at the first censuses; that is an artefact of the record’s
+start, not a property of the hypothesis, and the package does not offer
+it.</p>
+</div>
+<div id="the-ceiling-averaging-cannot-concentrate" class="section level2">
+<h2>2. The ceiling: averaging cannot concentrate</h2>
+<p>Write the expected series as <span class="math inline">\(\mu = W
+X\)</span> with <span class="math inline">\(W\)</span> the <span class="math inline">\(n \times T\)</span> matrix of weights. Each row of
+<span class="math inline">\(W\)</span> is non-negative and sums to one,
+so each <span class="math inline">\(\mu_t\)</span> is a weighted average
+of the <span class="math inline">\(X\)</span> values in its window. The
+concentration indices used here, the Gini coefficient</p>
+<p><span class="math display">\[
+G(x) = \frac{2 \sum_{i=1}^{n} i\, x_{(i)}}{n \sum_i x_i} -
+\frac{n+1}{n},
+\]</span></p>
+<p>with <span class="math inline">\(x_{(i)}\)</span> the values in
+increasing order, and the coefficient of variation <span class="math inline">\(\mathrm{CV}(x) = s_x / \bar x\)</span>, are both
+Schur-convex: they fall whenever a quantity is moved from a fuller
+period to an emptier one, and they are invariant to scale. By the Hardy,
+Littlewood and Pólya theorem (Hardy et al. 1952; Marshall et al. 2011,
+ch. 2), a vector obtained from another by a doubly stochastic matrix is
+majorized by it, and every Schur-convex index of the output is therefore
+no larger than that of the input. Over a full record, in which every
+<span class="math inline">\(X_t\)</span> enters the same number of
+windows with the same total weight, <span class="math inline">\(W\)</span> is doubly stochastic up to the
+boundary, and the most concentrated output available is the pure delay,
+which permutes the series without mixing it. Hence</p>
+<p><span class="math display">\[
+\text{concentration}\big(\mathbb{E}[R]\big) \;\le\;
+\text{concentration}(X),
+\]</span></p>
+<p>with equality at a pure delay. Reproduction’s own concentration is
+the ceiling. <code>lag_ceiling()</code> reports it as
+<code>theorem</code> and confirms it by searching the kernel families on
+exactly the periods at which recruits are scored; the searched maximum
+can differ from the bound by a small amount in either direction because
+of the boundary (backfilling) and because the scored periods are a
+subset of the record.</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a>ce <span class="ot">&lt;-</span> <span class="fu">lag_ceiling</span>(lepanthes_census, <span class="at">reproduction =</span> <span class="st">&quot;inflorescences&quot;</span>, <span class="at">K =</span> <span class="dv">4</span>,</span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a>                  <span class="at">kernels =</span> <span class="fu">lag_kernels</span>(<span class="dv">4</span>, <span class="at">n_dirichlet =</span> <span class="dv">2000</span>, <span class="at">bin =</span> <span class="dv">6</span>, <span class="at">unit =</span> <span class="st">&quot;mo&quot;</span>))</span>
+<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a>ce<span class="sc">$</span>theorem; ce<span class="sc">$</span>ceiling; ce<span class="sc">$</span>best<span class="sc">$</span>label</span>
+<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a><span class="co">#&gt;      gini        cv </span></span>
+<span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a><span class="co">#&gt; 0.2585397 0.5696392</span></span>
+<span id="cb3-6"><a href="#cb3-6" tabindex="-1"></a><span class="co">#&gt;     gini       cv </span></span>
+<span id="cb3-7"><a href="#cb3-7" tabindex="-1"></a><span class="co">#&gt; 0.253937 0.547403</span></span>
+<span id="cb3-8"><a href="#cb3-8" tabindex="-1"></a><span class="co">#&gt; [1] &quot;pure delay 12-18 mo&quot;</span></span></code></pre></div>
+<p>The searched cloud shows the whole family sitting below the bound,
+with pure delays at its edge:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a>s <span class="ot">&lt;-</span> ce<span class="sc">$</span>search</span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a><span class="fu">plot</span>(s<span class="sc">$</span>gini, s<span class="sc">$</span>cv, <span class="at">pch =</span> <span class="dv">16</span>, <span class="at">cex =</span> <span class="fl">0.5</span>, <span class="at">col =</span> <span class="fu">ifelse</span>(s<span class="sc">$</span>family <span class="sc">==</span> <span class="st">&quot;pure delay&quot;</span>, <span class="st">&quot;#D55E00&quot;</span>, <span class="st">&quot;#56B4E9&quot;</span>),</span>
+<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a>     <span class="at">xlab =</span> <span class="st">&quot;Gini of the expected series&quot;</span>, <span class="at">ylab =</span> <span class="st">&quot;CV of the expected series&quot;</span>,</span>
+<span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a>     <span class="at">xlim =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="fl">0.7</span>), <span class="at">ylim =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="fl">1.5</span>))</span>
+<span id="cb4-5"><a href="#cb4-5" tabindex="-1"></a><span class="fu">abline</span>(<span class="at">v =</span> ce<span class="sc">$</span>theorem[<span class="st">&quot;gini&quot;</span>], <span class="at">h =</span> ce<span class="sc">$</span>theorem[<span class="st">&quot;cv&quot;</span>], <span class="at">lty =</span> <span class="dv">2</span>)</span>
+<span id="cb4-6"><a href="#cb4-6" tabindex="-1"></a><span class="fu">points</span>(ce<span class="sc">$</span>obs[<span class="st">&quot;gini&quot;</span>], ce<span class="sc">$</span>obs[<span class="st">&quot;cv&quot;</span>], <span class="at">pch =</span> <span class="dv">17</span>, <span class="at">cex =</span> <span class="fl">1.6</span>)</span>
+<span id="cb4-7"><a href="#cb4-7" tabindex="-1"></a><span class="fu">legend</span>(<span class="st">&quot;topleft&quot;</span>, <span class="at">bty =</span> <span class="st">&quot;n&quot;</span>, <span class="at">pch =</span> <span class="fu">c</span>(<span class="dv">16</span>, <span class="dv">16</span>, <span class="dv">17</span>), <span class="at">col =</span> <span class="fu">c</span>(<span class="st">&quot;#56B4E9&quot;</span>, <span class="st">&quot;#D55E00&quot;</span>, <span class="st">&quot;black&quot;</span>),</span>
+<span id="cb4-8"><a href="#cb4-8" tabindex="-1"></a>       <span class="at">legend =</span> <span class="fu">c</span>(<span class="st">&quot;searched kernels&quot;</span>, <span class="st">&quot;pure delays&quot;</span>, <span class="st">&quot;observed recruitment&quot;</span>))</span></code></pre></div>
+<p><img role="img" src="data:image/png;base64,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" /><!-- --></p>
+<p>The bound is stated for the expectation. The observed series is a
+count about that expectation, and counts are more concentrated than
+their mean. The exceedance <code>ce$exceedance</code> is therefore a
+description, not a test.</p>
+</div>
+<div id="the-second-diagnosis-the-lag-is-unidentifiable" class="section level2">
+<h2>3. The second diagnosis: the lag is unidentifiable</h2>
+<p>If <span class="math inline">\(X\)</span> is nearly constant, <span class="math inline">\(W X\)</span> is nearly constant for every <span class="math inline">\(W\)</span>, and the data carry almost no
+information about <span class="math inline">\(w\)</span>. A
+distributed-lag model fitted to such data returns its prior, however
+long the series runs; the fitted profile in
+<code>lepanthes_profile</code> is close to flat for that reason.
+<code>rain_expected()</code> makes the point visually: profiles that
+could not differ more give expected series that all but coincide.</p>
+</div>
+<div id="calibrating-the-pooled-comparison" class="section level2">
+<h2>4. Calibrating the pooled comparison</h2>
+<p>To ask whether an exceedance of the ceiling by counts means anything,
+take a mean that obeys the ceiling (the flat mean, or the best-kernel
+mean rescaled to the observed total) and draw negative-binomial counts
+about it with the observed variance-to-mean ratio <span class="math inline">\(v\)</span>, so that the size parameter is <span class="math inline">\(\phi = \mu / (v - 1)\)</span>. The probability
+that the simulated series is at least as concentrated as the observed
+one is what <code>ceiling_calibration()</code> reports. In the
+<em>Lepanthes</em> record and in every invented record of
+<code>regimes</code>, that probability is ordinary: pooled over units,
+small clumped counts about a flat mean look episodic whatever the
+mechanism.</p>
+</div>
+<div id="the-host-level-null-stated-as-the-hypothesis-is-asserted" class="section level2">
+<h2>5. The host-level null, stated as the hypothesis is asserted</h2>
+<p>The lag hypothesis is a statement about each unit. For unit <span class="math inline">\(p\)</span> with recruit totals <span class="math inline">\(S_p = \sum_t R_{p,t}\)</span>, the null fixes</p>
+<p><span class="math display">\[
+\mu_{p,t} \;=\; S_p \,\frac{\sum_k w_k X_{p,\,t-\ell_0-k}}{\sum_{t&#39;}
+\sum_k w_k X_{p,\,t&#39;-\ell_0-k}},
+\]</span></p>
+<p>so that the shape of each unit’s expected series is its own lagged
+reproduction and its scale is its own observed total. Nothing is fitted.
+A unit with no lagged reproduction on record but with recruits is given
+a flat expectation; a unit that never recruited contributes nothing.
+<code>expected_recruits()</code> returns this matrix.</p>
+<p>Clumping is estimated under that heterogeneous mean. For
+negative-binomial counts with means <span class="math inline">\(\mu_{p,t}\)</span> and common size <span class="math inline">\(\phi\)</span>, <span class="math inline">\(\mathbb{E}[(R - \mu)^2] = \mathbb{E}[\mu] +
+\mathbb{E}[\mu^2]/\phi\)</span>, so</p>
+<p><span class="math display">\[
+\hat\phi \;=\; \frac{\overline{\mu^2}}{\overline{(R-\mu)^2} - \bar\mu}
+\]</span></p>
+<p>over the units that recruited (<code>phi_moment()</code>). Estimating
+<span class="math inline">\(\phi\)</span> about a single pooled mean
+instead attributes the between-unit spread of the means to clumping and
+roughly halves <span class="math inline">\(\hat\phi\)</span>; the
+companion paper reports both, with the single-mean value as a stress
+test.</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a>h <span class="ot">&lt;-</span> <span class="fu">host_matrices</span>(lepanthes_hosts, <span class="at">unit =</span> <span class="st">&quot;host&quot;</span>, <span class="at">reproduction =</span> <span class="st">&quot;inflorescences&quot;</span>)</span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a>mu <span class="ot">&lt;-</span> <span class="fu">expected_recruits</span>(h<span class="sc">$</span>R, h<span class="sc">$</span>X, <span class="at">w =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">1</span>))</span>
+<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a><span class="fu">rowSums</span>(mu)[<span class="dv">1</span><span class="sc">:</span><span class="dv">5</span>]; <span class="fu">rowSums</span>(h<span class="sc">$</span>R)[<span class="dv">1</span><span class="sc">:</span><span class="dv">5</span>]     <span class="co"># scaled to each host&#39;s total</span></span>
+<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a><span class="co">#&gt; 209 229 231 234 235 </span></span>
+<span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a><span class="co">#&gt;   4   3  23  17   0</span></span>
+<span id="cb5-6"><a href="#cb5-6" tabindex="-1"></a><span class="co">#&gt; 209 229 231 234 235 </span></span>
+<span id="cb5-7"><a href="#cb5-7" tabindex="-1"></a><span class="co">#&gt;   4   3  23  17   0</span></span>
+<span id="cb5-8"><a href="#cb5-8" tabindex="-1"></a><span class="fu">phi_moment</span>(h<span class="sc">$</span>R, mu)</span>
+<span id="cb5-9"><a href="#cb5-9" tabindex="-1"></a><span class="co">#&gt; [1] 0.2753189</span></span></code></pre></div>
+<p><code>host_matrices()</code> is what the data-frame interface of
+<code>expected_recruits()</code> and <code>host_lag_test()</code> calls;
+a long tibble with <code>unit</code>, <code>period</code>,
+<code>reproduction</code> and <code>recruits</code> columns can be
+passed directly.</p>
+<p><code>host_lag_test()</code> then draws, for each profile,
+<code>nsim</code> negative-binomial count matrices about <span class="math inline">\(\mu\)</span> with size <span class="math inline">\(\hat\phi\)</span>, sums them over units to a
+census series, and computes four statistics of that series: the number
+of silent censuses (no recruit on any unit), the Gini and CV of the
+census totals, and the largest total. The reported probability is the
+fraction of draws at least as extreme as the observed record. Over
+profiles, the verdict is the maximum of each probability, that is, the
+best case the lag hypothesis can make for itself. The Gini and CV are
+the pre-specified statistics of the paper; the silent-census count is
+the most interpretable where a gate closes completely, and the largest
+census the least sensitive.</p>
+</div>
+<div id="what-the-test-does-and-does-not-say" class="section level2">
+<h2>6. What the test does and does not say</h2>
+<p>A small verdict says that no delayed consequence of each unit’s own
+reproduction, of any profile over the horizon searched, produces a
+record as concentrated as the observed one: the timing of recruitment is
+not set by the timing of seed supply. It does not identify what sets it.
+An ordinary verdict says the record is consistent with a delay; it does
+not identify the delay, which under continuous reproduction cannot be
+recovered (Section 3). Where reproduction is seasonal the ceiling is
+high and the test is weak, as the invented records show; aseasonality is
+where it bites.</p>
+</div>
+<div id="function-map" class="section level2">
+<h2>Function map</h2>
+<table>
+<colgroup>
+<col width="33%" />
+<col width="33%" />
+<col width="33%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Step</th>
+<th>Function</th>
+<th>Companion-paper phase</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Concentration indices</td>
+<td><code>rain_gini()</code>, <code>rain_cv()</code>,
+<code>concentration()</code></td>
+<td>Table of series</td>
+</tr>
+<tr class="even">
+<td>Lag profiles</td>
+<td><code>lag_kernels()</code>, <code>flat_kernel()</code></td>
+<td>9a, 9d</td>
+</tr>
+<tr class="odd">
+<td>From a long data frame to series and matrices</td>
+<td><code>series_from()</code>, <code>host_matrices()</code></td>
+<td>data preparation</td>
+</tr>
+<tr class="even">
+<td>Expected series</td>
+<td><code>convolve_lag()</code></td>
+<td>9a, 9b</td>
+</tr>
+<tr class="odd">
+<td>Ceiling and search</td>
+<td><code>lag_ceiling()</code></td>
+<td>9a</td>
+</tr>
+<tr class="even">
+<td>Pooled calibration</td>
+<td><code>ceiling_calibration()</code></td>
+<td>9b</td>
+</tr>
+<tr class="odd">
+<td>Unit-level expectation and clumping</td>
+<td><code>expected_recruits()</code>, <code>phi_moment()</code></td>
+<td>9d</td>
+</tr>
+<tr class="even">
+<td>Host-level test</td>
+<td><code>host_lag_test()</code></td>
+<td>9d</td>
+</tr>
+<tr class="odd">
+<td>Several units and several reproductive measures</td>
+<td><code>lag_ceiling_by()</code>, <code>rain_indices()</code></td>
+<td>sensitivity analyses</td>
+</tr>
+<tr class="even">
+<td>Census schedule</td>
+<td><code>rain_intervals()</code></td>
+<td>data preparation</td>
+</tr>
+<tr class="odd">
+<td>Uncertainty on the exceedance</td>
+<td><code>lag_ceiling_boot()</code>,
+<code>lag_ceiling_bayesboot()</code>, <code>lag_ceiling_stan()</code>,
+<code>ceiling_draws_table()</code></td>
+<td>intervals</td>
+</tr>
+<tr class="even">
+<td>Is a first sighting a recruit?</td>
+<td><code>recruit_triage()</code></td>
+<td>recruit definition</td>
+</tr>
+<tr class="odd">
+<td>Figures</td>
+<td><code>rain_series()</code>, <code>rain_strip()</code>,
+<code>rain_strips()</code>, <code>rain_units()</code>,
+<code>rain_profiles()</code>, <code>rain_expected()</code>,
+<code>rain_forest()</code>, <code>rain_sightings()</code>,
+<code>plot()</code> methods</td>
+<td>Figs 2, 3 and 5</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div id="references" class="section level2">
+<h2>References</h2>
+<p>Hardy, G. H., Littlewood, J. E. and Pólya, G. (1952)
+<em>Inequalities</em>, 2nd edn. Cambridge University Press,
+Cambridge.</p>
+<p>Koyck, L. M. (1954) <em>Distributed Lags and Investment
+Analysis</em>. North-Holland, Amsterdam.</p>
+<p>Marshall, A. W., Olkin, I. and Arnold, B. C. (2011) <em>Inequalities:
+Theory of Majorization and Its Applications</em>. Springer, New
+York.</p>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>
